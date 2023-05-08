@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { checkChain, getCurrentWalletConnected } from '../utils/connection';
 import { getMetadata } from '../utils/tastybones';
+import { getBalance } from '../utils/etherscan';
 
 const Home = () => { 
   const [hasMetamask, setHasMetamask] = useState(false);
@@ -9,6 +10,7 @@ const Home = () => {
   const [isCorrectChain, setIsCorrectChain] = useState(false);
   const [tokenId, setTokenId] = useState(null);
   const [metadata, setMetadata] = useState(null);
+  const [accountBalance, setAccountBalance] = useState(null);
 
   const isMetaMaskInstalled = () => {
     return Boolean(window.ethereum)
@@ -44,6 +46,8 @@ const Home = () => {
       setAddresses(connection.address);
       setConnected(true);
       // check if user has early access rights
+      const bal = await getBalance(connection.address);
+      setAccountBalance(bal);
     }
   }
 
@@ -58,6 +62,7 @@ const Home = () => {
   }
 
   const getData = async () => { 
+    if (tokenId === null) return;
     console.log("🚀 ~ file: index.js:63 ~ getData ~ tokenId:", tokenId)
     const data = await getMetadata(tokenId);
     setMetadata(data);
@@ -74,6 +79,7 @@ const Home = () => {
                 isCorrectChain ?
                 <div>
                   <p>Connected Address: {addresses}</p>
+                  <p>Balance: {accountBalance} ETH</p>
                   <div> 
                     <input type="text" onChange={(e) => setTokenId(e.target.value)} />
                     <button onClick={() => getData()}>Get Metadata</button>
