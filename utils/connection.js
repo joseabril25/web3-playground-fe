@@ -1,5 +1,5 @@
 import constants from "./constants";
-
+import config from "./env";
 /*
   * This function checks if metamask is installed, is metamask connected
 */
@@ -33,7 +33,7 @@ export const getCurrentWalletConnected = async () => {
 */
 export const checkChain = async () => {
   const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-  if(chainId === constants.DEFAULT_CHAIN) { // Rinkeby testnet, Ethereum for mainnet
+  if(chainId === config.chainId) { // Rinkeby testnet, Ethereum for mainnet
     return true;
   } else {
     return false;

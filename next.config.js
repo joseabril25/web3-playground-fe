@@ -13,4 +13,7 @@ module.exports = {
      };
     return config;
   },
+  env: {
+    NEXT_ETHERSCANAPI_KEY: process.env.NEXT_ETHERSCANAPI_KEY,
+  },
 }

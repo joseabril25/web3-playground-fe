@@ -1,26 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { balanceOf, checkBonesOfOwner } from '../utils/approving-bone';
-import { checkCurrentCorgisMinted, checkMaxEarlyAccess, mintEarlyAccess, checkIfEarlyAccessIsActive, checkBoneBal } from '../utils/approving-corgis-early-access';
 import { checkChain, getCurrentWalletConnected } from '../utils/connection';
-
+import { getMetadata } from '../utils/tastybones';
 
 const Home = () => { 
   const [hasMetamask, setHasMetamask] = useState(false);
   const [connected, setConnected] = useState(false);
   const [addresses, setAddresses] = useState('');
   const [isCorrectChain, setIsCorrectChain] = useState(false);
-  const [maxEarly, setMaxEarly] = useState(0);
-  const [mintQt, setMintQt] = useState(0);
-  const [isAllowedToMint, setIsAllowedToMint] = useState(false);
-  const [currentEarly, setCurrentEarly] = useState(0);
-  const [isEarlyMintActive, setIsEarlyMintActive] = useState(false);
-  const [boneIds, setBoneIds] = useState([]);
-  const [boneBalance, setBoneBalances] = useState(0);
-  const [currentBoneId, setCurrentBoneId] = useState(null);
-
-  const handleChange = (event) => {
-    setMintQt(event.target.value)
-  }
+  const [tokenId, setTokenId] = useState(null);
+  const [metadata, setMetadata] = useState(null);
 
   const isMetaMaskInstalled = () => {
     return Boolean(window.ethereum)
@@ -56,16 +44,7 @@ const Home = () => {
       setAddresses(connection.address);
       setConnected(true);
       // check if user has early access rights
-      checkHasEarlyAccess();
-      checkAvailability();
-      checkEarlyAccessIsActive();
-      checkBonesId();
     }
-  }
-
-  const checkEarlyAccessIsActive = async () => {
-    const isActive = await checkIfEarlyAccessIsActive();
-    setIsEarlyMintActive(isActive);
   }
 
   const getChainId = async () => {
@@ -78,50 +57,11 @@ const Home = () => {
     getAccounts()
   }
 
-  const checkHasEarlyAccess = async () => {
-    try {
-      const balance = await balanceOf();
-      if(balance < 1) {
-        setIsAllowedToMint(false);
-      } else {
-        setIsAllowedToMint(true);
-      }
-    } catch (error) {
-      
-    }
+  const getData = async () => { 
+    console.log("🚀 ~ file: index.js:63 ~ getData ~ tokenId:", tokenId)
+    const data = await getMetadata(tokenId);
+    setMetadata(data);
   }
-
-  const mintCorgisEarly = async () => {
-    const payload = {
-      boneTokenId: currentBoneId,
-      amount: (mintQt  * 0.05), // number of corgis * price
-      numberOfTokens: mintQt,
-    }
-    const mint = await mintEarlyAccess(payload);
-    console.log("🚀 ~ file: index.js ~ line 85 ~ mintBone ~ mint", mint)
-  }
-
-  const checkAvailability = async() => {
-    const maxCorgis = await checkMaxEarlyAccess();
-    const hasMinetd = await checkCurrentCorgisMinted();
-    setMaxEarly(maxCorgis);
-    setCurrentEarly(hasMinetd);
-  }
-
-  const checkBonesId = async() => {
-    const bones = await checkBonesOfOwner();
-    console.log("🚀 ~ file: early-mint.js ~ line 110 ~ checkBonesId ~ bones", bones)
-    setBoneIds(bones);
-    checkBoneB(bones[0]);
-    setCurrentBoneId(bones[0]);
-  }
-
-  const checkBoneB = async(id) => {
-    const boneBal = await checkBoneBal({boneTokenId: id});
-    console.log("🚀 ~ file: early-mint.js ~ line 122 ~ checkBoneBal ~ boneBal", boneBal)
-    setBoneBalances(5 - boneBal);
-  }
-
   return (
     <div>
       <div>
@@ -132,7 +72,38 @@ const Home = () => {
             :
               (
                 isCorrectChain ?
-                  <p>{addresses}</p>
+                <div>
+                  <p>Connected Address: {addresses}</p>
+                  <div> 
+                    <input type="text" onChange={(e) => setTokenId(e.target.value)} />
+                    <button onClick={() => getData()}>Get Metadata</button>
+                  </div>
+
+                  <div>
+                    {metadata && (
+                      <div>
+                        <img
+                          src={metadata?.image}
+                          width={500}
+                          height={500}
+                          alt="Picture of the Product"
+                        />
+                        <h3>Name: </h3>
+                        <p>{metadata?.name}</p>
+                        <h3>Description:</h3>
+                        <p>{metadata?.description}</p>
+                        <h3>Product Description</h3>
+                        {
+                          metadata?.attributes.map((attribute, index) => (
+                            <div key={index}>
+                              <p>{attribute.trait_type}: {attribute.value}</p>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    )}
+                  </div>
+                </div>
                   :
                   <h2>Wrong Chain. Chain must be Rinkeby</h2>
               )
@@ -142,23 +113,7 @@ const Home = () => {
         }
       </div>
       <div>
-        { isEarlyMintActive ? (
-          isAllowedToMint ? 
-          <div>
-            <h2>Early Access Mint</h2>
-            <p>bone IDs: {boneIds}</p>
-            <p>bone balance: {boneBalance}</p>
-            Quantity <input type="number" value={mintQt}  onChange={handleChange} />
-            <button onClick={() => mintCorgisEarly()}>Mint Early Access</button>
-            <p>Count: {currentEarly}/{maxEarly}</p>
-          </div>
-          : 
-          <h3>You are not eligible for early access</h3>
-        ) : 
-          <div>
-            <h2>Early Access Mint Not Yet Active </h2>
-          </div>
-        }
+       
       </div>
     </div>
   )
